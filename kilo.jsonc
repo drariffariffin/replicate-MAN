@@ -198,7 +198,15 @@
       "git clone *": "allow",
       "gh api \"users/izzathakimimohd-pixel/repos\" *": "allow",
       "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister *": "allow",
-      "plutil *": "allow"
+      "plutil *": "allow",
+      "gh api users/syrimo/repos *": "allow",
+      "gh api orgs/syrimo/repos *": "allow",
+      "gh search repos *": "allow",
+      "gh repo clone *": "allow",
+      "git remote get-url *": "allow",
+      "git ls-files *": "allow",
+      "date *": "allow",
+      "exit *": "allow"
     },
     "external_directory": {
       "/tmp/*": "allow",
