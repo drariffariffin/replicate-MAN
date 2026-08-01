@@ -244,7 +244,14 @@
       "Sort-Object *": "allow",
       "Get-ChildItem *": "allow",
       "gh repo list *": "allow",
-      "New-Item *": "allow"
+      "New-Item *": "allow",
+      "Get-ScheduledTask *": "allow",
+      "Get-StartApps *": "allow",
+      "Stop-Process *": "allow",
+      "Remove-ItemProperty *": "allow",
+      "Get-CimInstance *": "allow",
+      "ForEach-Object *": "allow",
+      "Remove-Item *": "allow"
     },
     "external_directory": {
       "/tmp/*": "allow",
