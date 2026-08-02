@@ -251,7 +251,15 @@
       "Remove-ItemProperty *": "allow",
       "Get-CimInstance *": "allow",
       "ForEach-Object *": "allow",
-      "Remove-Item *": "allow"
+      "Remove-Item *": "allow",
+      "Rename-Item *": "allow",
+      "Write-Host *": "allow",
+      "python \"$env:USERPROFILE\\.config\\kilo\\whisper_melayu.py\" *": "allow",
+      "Get-NetTCPConnection *": "allow",
+      "npm list *": "allow",
+      "npm install *": "allow",
+      "Set-Content *": "allow",
+      "cmd *": "allow"
     },
     "external_directory": {
       "/tmp/*": "allow",
