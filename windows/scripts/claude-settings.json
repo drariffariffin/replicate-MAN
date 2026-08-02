@@ -1,0 +1,16 @@
+{
+  "theme": "auto",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\Admin\\.claude\\scripts\\speak-hook.ps1\"",
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}
