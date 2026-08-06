@@ -207,6 +207,7 @@
       "git ls-files *": "allow",
       "date *": "allow",
       "exit *": "allow",
+      "/man-sync-pull *": "allow",
       "Get-Date *": "allow",
       "Tee-Object *": "allow",
       "Out-Null *": "allow",
@@ -259,7 +260,8 @@
       "npm list *": "allow",
       "npm install *": "allow",
       "Set-Content *": "allow",
-      "cmd *": "allow"
+      "cmd *": "allow",
+      "git rebase *": "allow"
     },
     "external_directory": {
       "/tmp/*": "allow",
