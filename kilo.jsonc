@@ -266,13 +266,16 @@
       "\"$env:USERPROFILE\\.config\\kilo\\jarvis_intro.ps1\" *": "allow",
       "Join-Path *": "allow",
       "\"C:\\Users\\Admin\\AppData\\Local\\WisprFlow\\Wispr Flow.exe\" *": "allow",
-      "Split-Path *": "allow"
+      "Split-Path *": "allow",
+      "whoami *": "allow",
+      "hostname *": "allow"
     },
     "external_directory": {
       "/tmp/*": "allow",
       "/var/log/cups/*": "allow",
       "/tmp/rocketek-driver/Au9540 Smart Card Reader Driver for MAC OS/9540Tool_desktop.app/*": "allow",
-      "/Applications/*": "allow"
+      "/Applications/*": "allow",
+      "/opt/homebrew/lib/python3.14/site-packages/edge_tts/*": "allow"
     },
     "read": {
       "*": "allow"

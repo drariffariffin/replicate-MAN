@@ -32,6 +32,17 @@ try {
         exit 1
     }
 
+    # Re-encode ke 128kbps guna ffmpeg (kalau ada)
+    $ffmpeg = Get-Command ffmpeg -ErrorAction SilentlyContinue
+    if ($ffmpeg) {
+        $tmp128 = Join-Path $env:TEMP "orca_tts_128_$([System.Guid]::NewGuid().ToString().Substring(0,8)).mp3"
+        & ffmpeg -i $tmpFile -b:a 128k -ar 44100 -y $tmp128 2>$null
+        if (Test-Path $tmp128) {
+            Remove-Item $tmpFile -Force
+            Move-Item $tmp128 $tmpFile -Force
+        }
+    }
+
     # Mainkan audio guna Windows MCI (Media Control Interface) — tanpa UI, macam afplay
     Add-Type -TypeDefinition @"
 using System;
