@@ -268,7 +268,10 @@
       "\"C:\\Users\\Admin\\AppData\\Local\\WisprFlow\\Wispr Flow.exe\" *": "allow",
       "Split-Path *": "allow",
       "whoami *": "allow",
-      "hostname *": "allow"
+      "hostname *": "allow",
+      "netsh *": "allow",
+      "Get-AudioDevice *": "allow",
+      "Get-WmiObject *": "allow"
     },
     "external_directory": {
       "/tmp/*": "allow",
