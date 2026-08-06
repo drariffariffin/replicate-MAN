@@ -262,7 +262,11 @@
       "Set-Content *": "allow",
       "cmd *": "allow",
       "git rebase *": "allow",
-      "git fetch *": "allow"
+      "git fetch *": "allow",
+      "\"$env:USERPROFILE\\.config\\kilo\\jarvis_intro.ps1\" *": "allow",
+      "Join-Path *": "allow",
+      "\"C:\\Users\\Admin\\AppData\\Local\\WisprFlow\\Wispr Flow.exe\" *": "allow",
+      "Split-Path *": "allow"
     },
     "external_directory": {
       "/tmp/*": "allow",

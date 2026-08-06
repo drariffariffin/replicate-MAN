@@ -27,26 +27,27 @@ if (-not (Test-Path $jarvisVoice)) {
     exit 1
 }
 
-# Play background music (Iron Man Theme)
+# Open both files
 $null = [WinMM]::mciSendString("open `"$bgMusic`" type MPEGVideo alias jard_bg", $null, 0, [IntPtr]::Zero)
-$null = [WinMM]::mciSendString("set jard_bg time format milliseconds", $null, 0, [IntPtr]::Zero)
-$null = [WinMM]::mciSendString("play jard_bg", $null, 0, [IntPtr]::Zero)
-
-Start-Sleep -Milliseconds 500
-
-# Play JARVIS voice
 $null = [WinMM]::mciSendString("open `"$jarvisVoice`" type MPEGVideo alias jard_vc", $null, 0, [IntPtr]::Zero)
+
+# Balance: JARVIS voice full volume, BG music at 25%
+$null = [WinMM]::mciSendString("setaudio jard_vc volume to 400", $null, 0, [IntPtr]::Zero)
+$null = [WinMM]::mciSendString("setaudio jard_bg volume to 120", $null, 0, [IntPtr]::Zero)
+
+# Play both simultaneously
+$null = [WinMM]::mciSendString("play jard_bg", $null, 0, [IntPtr]::Zero)
 $null = [WinMM]::mciSendString("play jard_vc", $null, 0, [IntPtr]::Zero)
 
-# Wait for JARVIS voice to finish
+# Wait for JARVIS voice to finish (longer of the two)
 do {
     Start-Sleep -Milliseconds 300
     $status = New-Object System.Text.StringBuilder 128
     $null = [WinMM]::mciSendString("status jard_vc mode", $status, 128, [IntPtr]::Zero)
 } while ($status.ToString() -eq "playing")
 
+# Fade out and close both
+$null = [WinMM]::mciSendString("setaudio jard_bg volume to 50", $null, 0, [IntPtr]::Zero)
+Start-Sleep -Milliseconds 500
 $null = [WinMM]::mciSendString("close jard_vc", $null, 0, [IntPtr]::Zero)
-
-# Fade out BG music gently
-$null = [WinMM]::mciSendString("stop jard_bg", $null, 0, [IntPtr]::Zero)
 $null = [WinMM]::mciSendString("close jard_bg", $null, 0, [IntPtr]::Zero)
