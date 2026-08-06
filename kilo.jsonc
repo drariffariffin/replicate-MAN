@@ -261,7 +261,8 @@
       "npm install *": "allow",
       "Set-Content *": "allow",
       "cmd *": "allow",
-      "git rebase *": "allow"
+      "git rebase *": "allow",
+      "git fetch *": "allow"
     },
     "external_directory": {
       "/tmp/*": "allow",
