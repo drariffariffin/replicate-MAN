@@ -271,7 +271,11 @@
       "hostname *": "allow",
       "netsh *": "allow",
       "Get-AudioDevice *": "allow",
-      "Get-WmiObject *": "allow"
+      "Get-WmiObject *": "allow",
+      "tasklist *": "allow",
+      "\\\\\\$_.FriendlyName *": "allow",
+      "reg *": "allow",
+      "taskkill *": "allow"
     },
     "external_directory": {
       "/tmp/*": "allow",

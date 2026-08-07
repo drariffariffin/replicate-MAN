@@ -27,6 +27,19 @@ if (-not (Test-Path $jarvisVoice)) {
     exit 1
 }
 
+# Re-encode to 128kbps via ffmpeg for consistent quality
+$ffmpeg = Get-Command ffmpeg -ErrorAction SilentlyContinue
+if ($ffmpeg) {
+    $bg128 = Join-Path $env:TEMP "jard_bg_128.mp3"
+    $vc128 = Join-Path $env:TEMP "jard_vc_128.mp3"
+    & ffmpeg -i $bgMusic -b:a 128k -ar 44100 -y $bg128 2>$null
+    & ffmpeg -i $jarvisVoice -b:a 128k -ar 44100 -y $vc128 2>$null
+    if ((Test-Path $bg128) -and (Test-Path $vc128)) {
+        $bgMusic = $bg128
+        $jarvisVoice = $vc128
+    }
+}
+
 # Open both files
 $null = [WinMM]::mciSendString("open `"$bgMusic`" type MPEGVideo alias jard_bg", $null, 0, [IntPtr]::Zero)
 $null = [WinMM]::mciSendString("open `"$jarvisVoice`" type MPEGVideo alias jard_vc", $null, 0, [IntPtr]::Zero)
