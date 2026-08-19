@@ -1,22 +1,48 @@
 # speak.ps1 - Baca teks kuat dalam bahasa Melayu.
-# Utama  : suara neural Microsoft "Osman" (ms-MY-OsmanNeural) melalui edge-tts (perlu internet).
-# Sandaran: suara OneCore "Microsoft Rizwan" (ms-MY) melalui WinRT (luar talian).
-# Guna: powershell -Sta -File speak.ps1 -Text "Helo dunia"
-#       powershell -Sta -File speak.ps1 -FromFile C:\path\teks.txt
+# Rantaian tiga lapis (jatuh ke bawah bila satu gagal):
+#   1. ElevenLabs  - suara custom (cth Nora). Perlu kunci API. Hanya jalan bila voiceId diisi.
+#   2. edge-tts    - ms-MY-OsmanNeural / ms-MY-YasminNeural (perlu internet).
+#   3. WinRT       - suara OneCore ms-MY (luar talian; TIADA di PC ini, jadi ini jarang menolong).
+# Guna: powershell -File speak.ps1 -Text "Helo dunia"
+#       powershell -File speak.ps1 -FromFile C:\path\teks.txt
 param(
     [Parameter(ValueFromPipeline = $true)]
     [string]$Text,
     [string]$FromFile,
-    [string]$Voice = 'ms-MY-OsmanNeural',
+    [string]$Voice,
     [string]$FallbackVoice = 'Microsoft Rizwan',
     [string]$Loudness = '+40%',
-    [string]$Rate = '-10%'
+    [string]$Rate = '-10%',
+    [switch]$NoElevenLabs
 )
 
 $ErrorActionPreference = 'Stop'
 
 $log = Join-Path $PSScriptRoot 'speak.log'
 function Log($m) { "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  [speak] $m" | Add-Content -LiteralPath $log -Encoding UTF8 }
+
+# ---------- Konfigurasi ----------
+$cfgPath = Join-Path $PSScriptRoot 'voice-config.json'
+$cfg = $null
+if (Test-Path $cfgPath) {
+    try { $cfg = Get-Content -LiteralPath $cfgPath -Raw -Encoding UTF8 | ConvertFrom-Json } catch { Log "voice-config.json rosak: $($_.Exception.Message)" }
+}
+if (-not $Voice) {
+    if ($cfg -and $cfg.edgeVoice) { $Voice = $cfg.edgeVoice } else { $Voice = 'ms-MY-OsmanNeural' }
+}
+
+# Kunci ElevenLabs: env var dahulu, kemudian fail DPAPI (disulit untuk pengguna ini sahaja).
+function Get-ElevenLabsKey {
+    if ($env:ELEVENLABS_API_KEY) { return $env:ELEVENLABS_API_KEY }
+    $keyFile = Join-Path $PSScriptRoot '.elevenlabs-key'
+    if (-not (Test-Path $keyFile)) { return $null }
+    try {
+        $sec = Get-Content -LiteralPath $keyFile -Raw | ConvertTo-SecureString
+        $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)
+        try { return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) }
+        finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
+    } catch { Log "kunci EL tak dapat dibaca: $($_.Exception.Message)"; return $null }
+}
 
 function Get-CleanText($t) {
     $t = [regex]::Replace($t, '(?s)```.*?```', ' ')            # blok kod
@@ -28,8 +54,7 @@ function Get-CleanText($t) {
     return $t
 }
 
-# Main audio MP3 guna Windows MCI (winmm) - sama kaedah dengan say_osman.ps1 milik user.
-# Tak perlukan apartment STA dan tak buka sebarang UI.
+# Main audio MP3 guna Windows MCI (winmm) - tanpa UI, tanpa apartment STA.
 function Play-Media($path) {
     Add-Type -TypeDefinition @"
 using System;
@@ -55,6 +80,43 @@ public class WinMM {
     }
 }
 
+function Invoke-ElevenLabs($t) {
+    if ($NoElevenLabs) { throw 'ElevenLabs dilangkau (-NoElevenLabs)' }
+    if (-not $cfg -or $cfg.provider -eq 'edge') { throw 'provider=edge, ElevenLabs dimatikan' }
+    $voiceId = $null
+    if ($cfg.elevenLabs) { $voiceId = $cfg.elevenLabs.voiceId }
+    if (-not $voiceId) { throw 'voiceId ElevenLabs belum diisi' }
+    $key = Get-ElevenLabsKey
+    if (-not $key) { throw 'kunci ElevenLabs tiada' }
+
+    $modelId = 'eleven_multilingual_v2'
+    if ($cfg.elevenLabs.modelId) { $modelId = $cfg.elevenLabs.modelId }
+    $stability = 0.5; if ($null -ne $cfg.elevenLabs.stability) { $stability = $cfg.elevenLabs.stability }
+    $simBoost = 0.75; if ($null -ne $cfg.elevenLabs.similarityBoost) { $simBoost = $cfg.elevenLabs.similarityBoost }
+
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $outFile = Join-Path $env:TEMP ("claude-el-{0}.mp3" -f $PID)
+    $body = @{
+        text           = $t
+        model_id       = $modelId
+        voice_settings = @{ stability = $stability; similarity_boost = $simBoost }
+    } | ConvertTo-Json -Depth 5
+
+    try {
+        Invoke-RestMethod -Method Post `
+            -Uri "https://api.elevenlabs.io/v1/text-to-speech/$voiceId" `
+            -Headers @{ 'xi-api-key' = $key; 'Accept' = 'audio/mpeg' } `
+            -ContentType 'application/json; charset=utf-8' `
+            -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) `
+            -OutFile $outFile
+        if (-not (Test-Path $outFile) -or (Get-Item $outFile).Length -lt 1024) { throw 'ElevenLabs hasilkan audio kosong' }
+        Log ("elevenlabs/$voiceId $((Get-Item $outFile).Length) bait")
+        Play-Media $outFile
+    } finally {
+        Remove-Item $outFile -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Invoke-EdgeTts($t) {
     $py = (Get-Command python -ErrorAction SilentlyContinue).Source
     if (-not $py) { throw 'python tak dijumpai' }
@@ -67,7 +129,7 @@ function Invoke-EdgeTts($t) {
         & $py -m edge_tts --voice $Voice "--volume=$Loudness" "--rate=$Rate" --file $inFile --write-media $outFile | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "edge-tts keluar dengan kod $LASTEXITCODE" }
         if (-not (Test-Path $outFile) -or (Get-Item $outFile).Length -lt 1024) { throw 'edge-tts hasilkan audio kosong' }
-        Log ("osman $((Get-Item $outFile).Length) bait")
+        Log ("$Voice $((Get-Item $outFile).Length) bait")
         Play-Media $outFile
     } finally {
         Remove-Item $inFile, $outFile -Force -ErrorAction SilentlyContinue
@@ -128,10 +190,15 @@ try {
     if ($Text.Length -gt 1500) { $Text = $Text.Substring(0, 1500) }
 
     try {
-        Invoke-EdgeTts $Text
+        Invoke-ElevenLabs $Text
     } catch {
-        Log "Osman gagal ($($_.Exception.Message)) - tukar ke Rizwan"
-        Invoke-WinRtTts $Text
+        Log "EL langkau/gagal ($($_.Exception.Message)) - guna edge-tts $Voice"
+        try {
+            Invoke-EdgeTts $Text
+        } catch {
+            Log "edge-tts gagal ($($_.Exception.Message)) - cuba sandaran WinRT"
+            Invoke-WinRtTts $Text
+        }
     }
     Log 'siap'
 } catch {

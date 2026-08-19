@@ -1,0 +1,12 @@
+{
+  "_nota": "Tetapan suara untuk speak.ps1. Tukar 'provider' kepada 'edge' untuk paksa Osman/Yasmin sahaja.",
+  "provider": "auto",
+  "edgeVoice": "ms-MY-OsmanNeural",
+  "elevenLabs": {
+    "preferredVoiceName": "Afifah",
+    "voiceId": "",
+    "modelId": "eleven_multilingual_v2",
+    "stability": 0.5,
+    "similarityBoost": 0.75
+  }
+}

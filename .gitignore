@@ -1,0 +1,12 @@
+# Rahsia — JANGAN sekali-kali commit
+.elevenlabs-key
+*.key
+.env
+.env.*
+
+# Log runtime
+*.log
+windows/scripts/speak.log
+
+# Fail sementara
+*.tmp
